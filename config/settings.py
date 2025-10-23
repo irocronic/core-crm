@@ -132,7 +132,7 @@ USE_I1N = True
 USE_TZ = True
 
 # ==========================================
-# 🔥 STATIC & MEDIA FILES (FIREBASE GÜNCELLEMESİ)
+# 🔥 STATIC & MEDIA FILES (RENDER HATASI İÇİN GÜNCELLENDİ)
 # ==========================================
 
 # --- STATIC FILES (Render için olduğu gibi kalıyor) ---
@@ -141,39 +141,50 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # --- MEDIA FILES (Firebase'e yönlendiriliyor) ---
-# .env dosyanıza FIREBASE_STORAGE_BUCKET_NAME = 'sizin-bucket-adiniz.appspot.com' ekleyin
 FIREBASE_STORAGE_BUCKET_NAME = config('FIREBASE_STORAGE_BUCKET_NAME', default='')
-
-# Zaten Firebase Admin için kullandığınız servis hesabı JSON dosyası
 FIREBASE_CREDS_PATH = config('FIREBASE_CREDENTIALS_PATH', default='')
 
-if FIREBASE_STORAGE_BUCKET_NAME and FIREBASE_CREDS_PATH and os.path.exists(FIREBASE_CREDS_PATH):
-    # django-storages için ayarlar
-    DEFAULT_FILE_STORAGE = 'storages.backends.firebase.FirebaseStorage'
-    
-    # Firebase Admin SDK'nın bu dosyayı bulabilmesi için
-    # (django-storages[firebase] paketi bunu kullanır)
-    os.environ.setdefault('FIREBASE_SERVICE_ACCOUNT_KEY_FILE', FIREBASE_CREDS_PATH)
-    
-    # Firebase Storage ayarları
-    FIREBASE_STORAGE_BUCKET_NAME = FIREBASE_STORAGE_BUCKET_NAME
-    # Medya dosyaları için genel (public) URL'ler oluştur (imzasız)
-    # Bu, Firebase Storage Rules'da public read izni gerektirir!
-    FIREBASE_STORAGE_MEDIA_PUBLIC = True
-    FIREBASE_STORAGE_URL_EXPIRATION = timedelta(days=365 * 10) # İsteğe bağlı
-    
-    # MEDIA_URL, Firebase'den otomatik olarak oluşturulacak
-    MEDIA_URL = f'https://storage.googleapis.com/{FIREBASE_STORAGE_BUCKET_NAME}/media/'
-    MEDIA_ROOT = '' # Lokal depolama kullanılmayacak
-    
-    print(f"✅ Firebase Storage '{FIREBASE_STORAGE_BUCKET_NAME}' için yapılandırıldı.")
-    
-else:
-    # Lokal geliştirme (Firebase ayarları yoksa)
-    print("⚠️ Firebase Storage ayarları bulunamadı. Lokal medya depolama kullanılıyor.")
+try:
+    # 1. Ayarlar (env vars) ve kimlik bilgisi dosyası var mı?
+    if FIREBASE_STORAGE_BUCKET_NAME and FIREBASE_CREDS_PATH and os.path.exists(FIREBASE_CREDS_PATH):
+        
+        # 2. Gerekli paket (django-storages[firebase]) yüklü mü?
+        #    Eğer yüklü değilse, bu satır ImportError fırlatacaktır.
+        import storages.backends.firebase
+        
+        # --- Ayarlar Başarılı ---
+        DEFAULT_FILE_STORAGE = 'storages.backends.firebase.FirebaseStorage'
+        
+        # Firebase Admin SDK'nın bu dosyayı bulabilmesi için
+        os.environ.setdefault('FIREBASE_SERVICE_ACCOUNT_KEY_FILE', FIREBASE_CREDS_PATH)
+        
+        # Firebase Storage ayarları
+        FIREBASE_STORAGE_BUCKET_NAME = FIREBASE_STORAGE_BUCKET_NAME
+        FIREBASE_STORAGE_MEDIA_PUBLIC = True
+        FIREBASE_STORAGE_URL_EXPIRATION = timedelta(days=365 * 10)
+        
+        MEDIA_URL = f'https://storage.googleapis.com/{FIREBASE_STORAGE_BUCKET_NAME}/media/'
+        MEDIA_ROOT = '' # Lokal depolama kullanılmayacak
+        
+        print(f"✅ Firebase Storage '{FIREBASE_STORAGE_BUCKET_NAME}' için yapılandırıldı.")
+        
+    else:
+        # --- Lokal Geliştirme (Ayarlar eksik) ---
+        print("⚠️ Firebase Storage ayarları bulunamadı. Lokal medya depolama kullanılıyor.")
+        DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+        MEDIA_URL = 'media/'
+        MEDIA_ROOT = BASE_DIR / 'media'
+
+except ImportError:
+    # --- Paket Hatası (Render'daki durum bu) ---
+    print("❌ HATA: 'django-storages[firebase]' paketi yüklü değil.")
+    print("⚠️ Firebase ayarları (env vars) algılandı ancak gerekli paket eksik.")
+    print("⚠️ Güvenli mod: Lokal medya depolamaya geri dönülüyor.")
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
     MEDIA_URL = 'media/'
     MEDIA_ROOT = BASE_DIR / 'media'
 # 🔥 GÜNCELLEME SONU 🔥
+
 
 # Default primary key
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
