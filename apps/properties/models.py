@@ -81,10 +81,10 @@ class Property(models.Model):
         SATILDI = 'SATILDI', 'Satıldı'
         PASIF = 'PASIF', 'Pasif'
     
-    # **** HATA ÇÖZÜMÜ: EKLENEN SATIR ****
+    # **** HATA ÇÖZÜMÜ 1 (Önceki Hata İçin) ****
     # CSV yükleme mantığı 'STATUS_CHOICES' aradığı için bu takma adı (alias) ekliyoruz.
     STATUS_CHOICES = Status.choices
-    # **** HATA ÇÖZÜMÜ SONU ****
+    # **** HATA ÇÖZÜMÜ 1 SONU ****
     
     class Facade(models.TextChoices):
         GUNEY = 'GUNEY', 'Güney'
@@ -95,6 +95,11 @@ class Property(models.Model):
         GUNEY_BATI = 'GUNEY_BATI', 'Güney-Batı'
         KUZEY_DOGU = 'KUZEY_DOGU', 'Kuzey-Doğu'
         KUZEY_BATI = 'KUZEY_BATI', 'Kuzey-Batı'
+    
+    # **** HATA ÇÖZÜMÜ 2 (Yeni Hata İçin) ****
+    # CSV yükleme mantığı 'FACADE_CHOICES' aradığı için bu takma adı (alias) ekliyoruz.
+    FACADE_CHOICES = Facade.choices
+    # **** HATA ÇÖZÜMÜ 2 SONU ****
     
     # Proje ve Konum Bilgileri
     project = models.ForeignKey(
