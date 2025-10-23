@@ -1,13 +1,25 @@
-Django==4.2.7
-djangorestframework==3.14.0
-djangorestframework-simplejwt==5.3.0
-django-cors-headers==4.3.0
-psycopg2-binary==2.9.9
-Pillow==9.5.0
-python-decouple==3.8
-django-filter==23.3
-drf-spectacular==0.26.5
-celery==5.3.4
-redis==5.0.1
-fcm-django==2.0.0
-reportlab==4.0.7
+# Django ve REST Framework
+django~=4.2
+djangorestframework
+djangorestframework-simplejwt
+django-cors-headers
+django-filter
+drf-spectacular
+
+# Asenkron Görevler ve Zamanlama
+celery
+redis
+
+# Firebase Bildirimleri
+fcm-django
+firebase-admin
+
+# PDF Oluşturma
+reportlab
+
+# Yardımcı Araçlar
+django-extensions
+python-decouple
+
+# Sunucu
+gunicorn
