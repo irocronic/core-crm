@@ -280,13 +280,19 @@ class PropertyViewSet(viewsets.ModelViewSet):
         user = request.user if request.user.is_authenticated else None
 
         try:
-            # 1. DOSYAYI OKU VE NEWLINE HATASINI ÇÖZ
-            # UTF-8 ile dosyayı oku, BOM'u atla
-            file_data = csv_file.read().decode('utf-8-sig')
-            # io.StringIO ile bellek içi dosya oluştur
-            csv_data = io.StringIO(file_data)
-            # DictReader kullan (delimiter=';' Excel için)
-            reader = csv.DictReader(csv_data, delimiter=';')
+            # 🔥 DEĞİŞİKLİK BURADA BAŞLIYOR 🔥
+            # Dosya objesini al (InMemoryUploadedFile)
+            uploaded_file = request.FILES['file']
+
+            # Dosyayı metin modunda okumak için TextIOWrapper kullan
+            # encoding='utf-8-sig' BOM'u atlar
+            # newline='' satır sonu karakterlerini evrensel olarak ele alır
+            text_file = io.TextIOWrapper(uploaded_file.file, encoding='utf-8-sig', newline='')
+
+            # DictReader'ı TextIOWrapper ile kullan (delimiter kontrolü önemli)
+            # Eğer dosyanız virgül ile ayrılıyorsa delimiter=',' yapın
+            reader = csv.DictReader(text_file, delimiter=';')
+            # 🔥 DEĞİŞİKLİK BURADA BİTİYOR 🔥
 
             headers_from_file = set(reader.fieldnames or [])
 
@@ -315,7 +321,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
                     if not project_name:
                          raise ValueError("project_name boş olamaz.")
                     try:
-                        project_instance = Project.objects.get(name__iexact=project_name)
+                        project_instance = Project.objects.get(name__iexact=project_name) # case-insensitive search
                         property_data['project'] = project_instance.id
                     except Project.DoesNotExist:
                         raise ValueError(f"'{project_name}' isimli proje bulunamadı.")
@@ -348,10 +354,11 @@ class PropertyViewSet(viewsets.ModelViewSet):
                         raise ValueError(f"Geçersiz cephe değeri: '{property_data['facade']}'.")
 
                     # 3. Serializer ile validasyon (burada daha kapsamlı kontrol yapılır)
+                    # PropertyCreateUpdateSerializer'ı kullanmak daha doğru
                     serializer = PropertyCreateUpdateSerializer(data=property_data)
                     if serializer.is_valid():
                         # Geçerli ise kaydetmek üzere listeye ekle
-                         created_property = serializer.save(created_by=request.user)
+                         created_property = serializer.save(created_by=request.user) # created_by'ı burada ekle
                          created_properties.append(created_property)
                     else:
                         # Serializer hatalarını topla
@@ -394,14 +401,16 @@ class PropertyViewSet(viewsets.ModelViewSet):
                  # 'created_properties': PropertySerializer(created_properties, many=True).data # Opsiyonel
             }, status=status.HTTP_201_CREATED)
 
+        except csv.Error as e: # CSV format hatasını ayrıca yakala
+            logger.error(f"CSV format hatası - User: {request.user.username} - Hata: {e}", exc_info=True)
+            return Response({'error': f'CSV format hatası: {e}'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-             # Genel dosya okuma veya CSV parse hatası
+             # Genel dosya okuma veya beklenmedik hata
              logger.error(f"CSV import sırasında genel hata - User: {request.user.username} - Hata: {e}", exc_info=True)
              return Response({'error': f'CSV dosyası işlenirken hata oluştu: {e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     # =======================================================
     # 🔥 GÜNCELLEME SONU
     # =======================================================
-
 
     # --- MEVCUT DİĞER ACTIONS ---
     @action(detail=True, methods=['post'], permission_classes=[IsSalesManager | IsAdmin]) # İzin güncellendi
