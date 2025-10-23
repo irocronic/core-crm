@@ -8,22 +8,31 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=True, cast=bool)
+# GÜNCELLEME: Render'da DEBUG=False olacağı için varsayılan değeri False yapın
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 # ==========================================
-# 🔥 ALLOWED_HOSTS - IP ADRESİNİZİ EKLEYİN
+# 🔥 ALLOWED_HOSTS - RENDER İÇİN GÜNCELLENDİ
 # ==========================================
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    '172.20.10.2',  # ⬅️ Bilgisayarınızın IP'si
-    '192.168.1.102',  # ⬅️ Bilgisayarınızın IP'si
-    '192.168.1.103',  # ⬅️ Bilgisayarınızın IP'si
-    '192.168.1.104',  # ⬅️ Bilgisayarınızın IP'si
-    '192.168.1.161',  # ⬅️ Bilgisayarınızın IP'si
-    '192.168.1.106',  # ⬅️ Bilgisayarınızın IP'si
-    '10.0.2.2',       # Android emulator için
+    '172.20.10.2',
+    '192.168.1.102',
+    '192.168.1.103',
+    '192.168.1.104',
+    '192.168.1.161',
+    '192.168.1.106',
+    '10.0.2.2',
 ]
+
+# Render'ın size verdiği .onrender.com alan adını buraya ekleyin
+# Render panelinde 'RENDER_EXTERNAL_HOSTNAME' adında bir ortam değişkeni oluşturun
+# Değeri: 'core-crm.onrender.com' (ya da sizin alan adınız ne ise)
+RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default=None)
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
 
 # INSTALLED_APPS
 INSTALLED_APPS = [
@@ -84,6 +93,8 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # ==========================================
 # DATABASE
 # ==========================================
+# Render'da PostgreSQL kullanacağınızı varsayarak decouple ayarları
+# Render panelinde DB_ENGINE='postgresql' ve diğer DB_ değişkenlerini tanımlamalısınız.
 DB_ENGINE = config('DB_ENGINE', default='sqlite3')
 
 if DB_ENGINE == 'sqlite3':
@@ -93,7 +104,7 @@ if DB_ENGINE == 'sqlite3':
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-else:  # PostgreSQL
+else:  # PostgreSQL (Render bunu kullanacak)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -123,6 +134,7 @@ USE_I18N = True
 USE_TZ = True
 
 # Static files
+# Render için 'staticfiles' klasörü
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
@@ -168,17 +180,19 @@ SIMPLE_JWT = {
 }
 
 # ==========================================
-# 🔥 CORS SETTINGS - GELİŞTİRME İÇİN AÇIK
+# 🔥 CORS SETTINGS - RENDER İÇİN ÖNEMLİ
 # ==========================================
-# Geliştirme ortamında tüm origin'lere izin ver
-CORS_ALLOW_ALL_ORIGINS = DEBUG  # DEBUG=True ise tüm origin'lere izin ver
+# DEBUG=False olduğunda (Render'da) bu ayar False olacak
+# ve aşağıdaki CORS_ALLOWED_ORIGINS listesi kullanılacak.
+[cite_start]CORS_ALLOW_ALL_ORIGINS = DEBUG  # [cite: 11]
 
-# Production'da bunları kullanın:
+# Production'da (Render'da) kullanılacak alan adları:
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'http://localhost:8080',        # ✅ Flutter web default
     'http://127.0.0.1:8080',        # ✅ Flutter web alternative
+    # 'https://sizin-flutter-uygulamanizin-domaini.com' # ⬅️ CANLI FLUTTER DOMAIN'İNİZİ EKLEYİN
 ]
 
 # Credential'lara izin ver (cookie, authorization header vb.)
@@ -208,6 +222,8 @@ CORS_ALLOW_METHODS = [
 ]
 
 # Celery Configuration
+# Render'da bir Redis eklentisi kullanıyorsanız,
+# CELERY_BROKER_URL ve CELERY_RESULT_BACKEND'i ortam değişkeni olarak tanımlayın.
 CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
 CELERY_ACCEPT_CONTENT = ['json']
@@ -216,6 +232,7 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
 # Firebase
+# FIREBASE_CREDENTIALS_PATH'i Render'da ortam değişkeni olarak ayarlayın
 FIREBASE_CREDENTIALS_PATH = config('FIREBASE_CREDENTIALS_PATH', default='')
 if FIREBASE_CREDENTIALS_PATH and os.path.exists(FIREBASE_CREDENTIALS_PATH):
     try:
