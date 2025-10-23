@@ -137,43 +137,72 @@ USE_TZ = True
 
 # --- STATIC FILES (Render için olduğu gibi kalıyor) --- # [cite: 9]
 # Render'da 'staticfiles' klasörüne collectstatic yapılır # [cite: 9]
-STATIC_URL = 'static/' # [cite: 9]
-STATIC_ROOT = BASE_DIR / 'staticfiles' # [cite: 9]
+STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# --- MEDIA FILES (Firebase'e yönlendiriliyor) --- # [cite: 9]
-FIREBASE_STORAGE_BUCKET_NAME = config('FIREBASE_STORAGE_BUCKET_NAME', default='') # [cite: 9]
-FIREBASE_CREDS_PATH = config('FIREBASE_CREDENTIALS_PATH', default='') # [cite: 9]
+# --- MEDIA FILES (Firebase/Google Cloud Storage'a yönlendiriliyor) ---
+FIREBASE_STORAGE_BUCKET_NAME = config('FIREBASE_STORAGE_BUCKET_NAME', default='') # GCS Bucket Name olarak da okunabilir
+FIREBASE_CREDS_PATH = config('FIREBASE_CREDENTIALS_PATH', default='') # GCS Credentials Path olarak da okunabilir
 
 try:
-    # 1. Ayarlar (env vars) ve kimlik bilgisi dosyası var mı? # [cite: 9]
-    if FIREBASE_STORAGE_BUCKET_NAME and FIREBASE_CREDS_PATH and os.path.exists(FIREBASE_CREDS_PATH): #
+    # 1. Ayarlar (env vars) ve kimlik bilgisi dosyası var mı?
+    if FIREBASE_STORAGE_BUCKET_NAME and FIREBASE_CREDS_PATH and os.path.exists(FIREBASE_CREDS_PATH):
 
-        # 2. Gerekli paket (django-storages[firebase]) yüklü mü? #
-        #    Eğer yüklü değilse, bu satır ImportError fırlatacaktır. # [cite: 11]
-        import storages.backends.firebase # [cite: 12]
+        # 2. Gerekli paket (django-storages[google]) yüklü mü?
+        #    Eğer yüklü değilse, bu satır ImportError fırlatacaktır.
+        import storages.backends.gcloud # <-- BURASI DEĞİŞTİ: firebase yerine gcloud
 
         # --- Ayarlar Başarılı ---
-        DEFAULT_FILE_STORAGE = 'storages.backends.firebase.FirebaseStorage' # [cite: 12]
+        DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage' # <-- BURASI DEĞİŞTİ
 
-        # Firebase Admin SDK'nın bu dosyayı bulabilmesi için # [cite: 12]
-        os.environ.setdefault('FIREBASE_SERVICE_ACCOUNT_KEY_FILE', FIREBASE_CREDS_PATH) # [cite: 12]
+        # Firebase Admin SDK veya Google Cloud SDK'nın bu dosyayı bulabilmesi için
+        # Not: Firebase Admin SDK zaten aşağıdaki FCM bölümünde başlatılıyor,
+        # Google Cloud Storage için 'GOOGLE_APPLICATION_CREDENTIALS' daha yaygındır
+        # ama FIREBASE_CREDS_PATH'i kullanmaya devam edebiliriz.
+        os.environ.setdefault('GOOGLE_APPLICATION_CREDENTIALS', FIREBASE_CREDS_PATH) # <-- Daha standart isim
 
-        # Firebase Storage ayarları # [cite: 12]
-        FIREBASE_STORAGE_BUCKET_NAME = FIREBASE_STORAGE_BUCKET_NAME # [cite: 12]
-        FIREBASE_STORAGE_MEDIA_PUBLIC = True #
-        FIREBASE_STORAGE_URL_EXPIRATION = timedelta(days=365 * 10) #
+        # Google Cloud Storage ayarları (Firebase Storage GCS kullanır)
+        GS_BUCKET_NAME = FIREBASE_STORAGE_BUCKET_NAME # django-storages GCS backend'i GS_BUCKET_NAME kullanır
+        GS_DEFAULT_ACL = 'publicRead' # Yüklenen dosyaların varsayılan olarak herkese açık olmasını sağlar
+        GS_QUERYSTRING_AUTH = False # URL'lerde imza gerektirmesin (publicRead ile birlikte)
 
-        MEDIA_URL = f'https://storage.googleapis.com/{FIREBASE_STORAGE_BUCKET_NAME}/media/' #
-        MEDIA_ROOT = '' # Lokal depolama kullanılmayacak #
+        # MEDIA URL'i GCS formatına göre ayarla (GS_BUCKET_NAME kullanılır)
+        MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/media/'
+        MEDIA_ROOT = '' # Lokal depolama kullanılmayacak
 
-        print(f"✅ Firebase Storage '{FIREBASE_STORAGE_BUCKET_NAME}' için yapılandırıldı.") #
+        print(f"✅ Google Cloud Storage (Firebase) '{GS_BUCKET_NAME}' için yapılandırıldı.") # <-- Mesaj güncellendi
 
     else:
-        # --- Lokal Geliştirme (Ayarlar eksik) --- #
-        print("⚠️ Firebase Storage ayarları bulunamadı. Lokal medya depolama kullanılıyor.") #
-        DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage' #
-        MEDIA_URL = 'media/' #
-        MEDIA_ROOT = BASE_DIR / 'media' #
+        # --- Lokal Geliştirme (Ayarlar eksik) ---
+        if not FIREBASE_STORAGE_BUCKET_NAME:
+             print("⚠️ FIREBASE_STORAGE_BUCKET_NAME ortam değişkeni ayarlanmamış.")
+        if not FIREBASE_CREDS_PATH:
+             print("⚠️ FIREBASE_CREDENTIALS_PATH ortam değişkeni ayarlanmamış.")
+        elif not os.path.exists(FIREBASE_CREDS_PATH):
+             print(f"⚠️ Kimlik bilgisi dosyası bulunamadı: {FIREBASE_CREDS_PATH}")
+
+        print("⚠️ Google Cloud Storage (Firebase) ayarları eksik/hatalı. Lokal medya depolama kullanılıyor.")
+        DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+        MEDIA_URL = 'media/'
+        MEDIA_ROOT = BASE_DIR / 'media'
+
+except ImportError:
+    # --- Paket Hatası ---
+    print("❌ HATA: 'django-storages[google]' paketi veya bağımlılıkları yüklü değil.") # <-- Mesaj güncellendi
+    print("⚠️ Gerekli paket eksik. 'pip install django-storages[google]' komutunu çalıştırdınız mı?")
+    print("⚠️ Güvenli mod: Lokal medya depolamaya geri dönülüyor.")
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    MEDIA_URL = 'media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
+except Exception as e:
+    # Diğer olası hataları yakala (örn: kimlik bilgisi dosyası okuma hatası)
+    print(f"❌ Storage yapılandırma sırasında beklenmedik hata: {e}")
+    print("⚠️ Güvenli mod: Lokal medya depolamaya geri dönülüyor.")
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    MEDIA_URL = 'media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
+
+# 🔥 GÜNCELLEME SONU 🔥
 
 except ImportError:
     # --- Paket Hatası (Render'daki durum bu) --- #
