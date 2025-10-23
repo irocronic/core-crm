@@ -81,6 +81,11 @@ class Property(models.Model):
         SATILDI = 'SATILDI', 'Satıldı'
         PASIF = 'PASIF', 'Pasif'
     
+    # **** HATA ÇÖZÜMÜ: EKLENEN SATIR ****
+    # CSV yükleme mantığı 'STATUS_CHOICES' aradığı için bu takma adı (alias) ekliyoruz.
+    STATUS_CHOICES = Status.choices
+    # **** HATA ÇÖZÜMÜ SONU ****
+    
     class Facade(models.TextChoices):
         GUNEY = 'GUNEY', 'Güney'
         KUZEY = 'KUZEY', 'Kuzey'
