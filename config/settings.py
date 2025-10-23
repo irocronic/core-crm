@@ -104,7 +104,7 @@ if DB_ENGINE == 'sqlite3':
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-else:  # PostgreSQL (Render bunu kullanacak)
+else:  # PostgreSQL (Render ve Neon DB bunu kullanacak)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -113,6 +113,12 @@ else:  # PostgreSQL (Render bunu kullanacak)
             'PASSWORD': config('DB_PASSWORD', default='secure_password'),
             'HOST': config('DB_HOST', default='localhost'),
             'PORT': config('DB_PORT', default='5432'),
+            
+            # 🔥 NEON DB İÇİN ZORUNLU SSL AYARI
+            # Ortam değişkeni olarak DB_SSLMODE=require ekleyeceğiz.
+            'OPTIONS': {
+                'sslmode': config('DB_SSLMODE', default='prefer')
+            }
         }
     }
 
