@@ -8,7 +8,6 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
-# GÜNCELLEME: Render'da DEBUG=False olacağı için varsayılan değeri False yapın
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 # ==========================================
@@ -26,9 +25,6 @@ ALLOWED_HOSTS = [
     '10.0.2.2',
 ]
 
-# Render'ın size verdiği .onrender.com alan adını buraya ekleyin
-# Render panelinde 'RENDER_EXTERNAL_HOSTNAME' adında bir ortam değişkeni oluşturun
-# Değeri: 'core-crm.onrender.com' (ya da sizin alan adınız ne ise)
 RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default=None)
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
@@ -46,11 +42,12 @@ INSTALLED_APPS = [
     # Third party apps
     'rest_framework',
     'rest_framework_simplejwt',
-    'corsheaders',  # ⬅️ CORS için gerekli
+    'corsheaders',
     'django_filters',
     'drf_spectacular',
     'fcm_django',
     'django_extensions',
+    'storages',  # 🔥 GÜNCELLEME: django-storages eklendi
     
     # Local apps
     'apps.users',
@@ -61,7 +58,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # ⬅️ En üstte olmalı
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -93,8 +90,6 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # ==========================================
 # DATABASE
 # ==========================================
-# Render'da PostgreSQL kullanacağınızı varsayarak decouple ayarları
-# Render panelinde DB_ENGINE='postgresql' ve diğer DB_ değişkenlerini tanımlamalısınız.
 DB_ENGINE = config('DB_ENGINE', default='sqlite3')
 
 if DB_ENGINE == 'sqlite3':
@@ -104,7 +99,7 @@ if DB_ENGINE == 'sqlite3':
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-else:  # PostgreSQL (Render ve Neon DB bunu kullanacak)
+else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -113,9 +108,6 @@ else:  # PostgreSQL (Render ve Neon DB bunu kullanacak)
             'PASSWORD': config('DB_PASSWORD', default='secure_password'),
             'HOST': config('DB_HOST', default='localhost'),
             'PORT': config('DB_PORT', default='5432'),
-            
-            # 🔥 NEON DB İÇİN ZORUNLU SSL AYARI
-            # Ortam değişkeni olarak DB_SSLMODE=require ekleyeceğiz.
             'OPTIONS': {
                 'sslmode': config('DB_SSLMODE', default='prefer')
             }
@@ -136,16 +128,52 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 LANGUAGE_CODE = 'tr-TR'
 TIME_ZONE = 'Europe/Istanbul'
-USE_I18N = True
+USE_I1N = True
 USE_TZ = True
 
-# Static files
-# Render için 'staticfiles' klasörü
+# ==========================================
+# 🔥 STATIC & MEDIA FILES (FIREBASE GÜNCELLEMESİ)
+# ==========================================
+
+# --- STATIC FILES (Render için olduğu gibi kalıyor) ---
+# Render'da 'staticfiles' klasörüne collectstatic yapılır
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# --- MEDIA FILES (Firebase'e yönlendiriliyor) ---
+# .env dosyanıza FIREBASE_STORAGE_BUCKET_NAME = 'sizin-bucket-adiniz.appspot.com' ekleyin
+FIREBASE_STORAGE_BUCKET_NAME = config('FIREBASE_STORAGE_BUCKET_NAME', default='')
+
+# Zaten Firebase Admin için kullandığınız servis hesabı JSON dosyası
+FIREBASE_CREDS_PATH = config('FIREBASE_CREDENTIALS_PATH', default='')
+
+if FIREBASE_STORAGE_BUCKET_NAME and FIREBASE_CREDS_PATH and os.path.exists(FIREBASE_CREDS_PATH):
+    # django-storages için ayarlar
+    DEFAULT_FILE_STORAGE = 'storages.backends.firebase.FirebaseStorage'
+    
+    # Firebase Admin SDK'nın bu dosyayı bulabilmesi için
+    # (django-storages[firebase] paketi bunu kullanır)
+    os.environ.setdefault('FIREBASE_SERVICE_ACCOUNT_KEY_FILE', FIREBASE_CREDS_PATH)
+    
+    # Firebase Storage ayarları
+    FIREBASE_STORAGE_BUCKET_NAME = FIREBASE_STORAGE_BUCKET_NAME
+    # Medya dosyaları için genel (public) URL'ler oluştur (imzasız)
+    # Bu, Firebase Storage Rules'da public read izni gerektirir!
+    FIREBASE_STORAGE_MEDIA_PUBLIC = True
+    FIREBASE_STORAGE_URL_EXPIRATION = timedelta(days=365 * 10) # İsteğe bağlı
+    
+    # MEDIA_URL, Firebase'den otomatik olarak oluşturulacak
+    MEDIA_URL = f'https://storage.googleapis.com/{FIREBASE_STORAGE_BUCKET_NAME}/media/'
+    MEDIA_ROOT = '' # Lokal depolama kullanılmayacak
+    
+    print(f"✅ Firebase Storage '{FIREBASE_STORAGE_BUCKET_NAME}' için yapılandırıldı.")
+    
+else:
+    # Lokal geliştirme (Firebase ayarları yoksa)
+    print("⚠️ Firebase Storage ayarları bulunamadı. Lokal medya depolama kullanılıyor.")
+    MEDIA_URL = 'media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
+# 🔥 GÜNCELLEME SONU 🔥
 
 # Default primary key
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -169,7 +197,6 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20,
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     
-    # 🔥 ÖNEMLİ: Decimal field'ları number olarak gönder (String değil!)
     'COERCE_DECIMAL_TO_STRING': False,
 }
 
@@ -188,22 +215,15 @@ SIMPLE_JWT = {
 # ==========================================
 # 🔥 CORS SETTINGS - RENDER İÇİN ÖNEMLİ
 # ==========================================
-# DEBUG=False olduğunda (Render'da) bu ayar False olacak
-# ve aşağıdaki CORS_ALLOWED_ORIGINS listesi kullanılacak.
-
-# Production'da (Render'da) kullanılacak alan adları:
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
-    'http://localhost:8080',        # ✅ Flutter web default
-    'http://127.0.0.1:8080',        # ✅ Flutter web alternative
-    # 'https://sizin-flutter-uygulamanizin-domaini.com' # ⬅️ CANLI FLUTTER DOMAIN'İNİZİ EKLEYİN
+    'http://localhost:8080',
+    'http://127.0.0.1:8080',
 ]
 
-# Credential'lara izin ver (cookie, authorization header vb.)
 CORS_ALLOW_CREDENTIALS = True
 
-# Hangi header'lara izin verilecek
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
@@ -216,7 +236,6 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-# Hangi HTTP method'lara izin verilecek
 CORS_ALLOW_METHODS = [
     'DELETE',
     'GET',
@@ -227,8 +246,6 @@ CORS_ALLOW_METHODS = [
 ]
 
 # Celery Configuration
-# Render'da bir Redis eklentisi kullanıyorsanız,
-# CELERY_BROKER_URL ve CELERY_RESULT_BACKEND'i ortam değişkeni olarak tanımlayın.
 CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
 CELERY_ACCEPT_CONTENT = ['json']
@@ -236,16 +253,21 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
-# Firebase
-# FIREBASE_CREDENTIALS_PATH'i Render'da ortam değişkeni olarak ayarlayın
-FIREBASE_CREDENTIALS_PATH = config('FIREBASE_CREDENTIALS_PATH', default='')
-if FIREBASE_CREDENTIALS_PATH and os.path.exists(FIREBASE_CREDENTIALS_PATH):
+# Firebase (FCM ve Admin SDK için)
+# (FIREBASE_CREDENTIALS_PATH yukarıda hem Storage hem Admin için tanımlandı)
+if FIREBASE_CREDS_PATH and os.path.exists(FIREBASE_CREDS_PATH):
     try:
         import firebase_admin
         from firebase_admin import credentials
-        cred = credentials.Certificate(FIREBASE_CREDENTIALS_PATH)
-        firebase_admin.initialize_app(cred)
-        print("✅ Firebase Admin SDK başarıyla başlatıldı")
+        
+        # Sadece bir kez başlatıldığından emin ol
+        if not firebase_admin._apps:
+            cred = credentials.Certificate(FIREBASE_CREDS_PATH)
+            firebase_admin.initialize_app(cred)
+            print("✅ Firebase Admin SDK başarıyla başlatıldı")
+        else:
+            print("ℹ️ Firebase Admin SDK zaten başlatılmış.")
+            
     except Exception as e:
         print(f"⚠️ Firebase Admin SDK başlatma hatası: {e}")
 

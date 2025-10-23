@@ -28,3 +28,5 @@ gunicorn
 
 # YENİ EKLENDİ: PostgreSQL Bağlantısı
 psycopg2-binary
+
+django-storages[firebase]

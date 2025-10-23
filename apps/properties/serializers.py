@@ -2,7 +2,7 @@
 
 from rest_framework import serializers
 from decimal import Decimal
-from .models import Property, PropertyImage, PropertyDocument, PaymentPlan, Project # Project import edildi
+from .models import Property, PropertyImage, PropertyDocument, PaymentPlan, Project
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -12,7 +12,6 @@ class ProjectSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Project
-        # GÜNCELLEME: Yeni resim alanları eklendi.
         fields = [
             'id', 'name', 'location', 'description', 'island', 'parcel', 'block',
             'property_count', 'available_count', 'project_image', 'site_plan_image'
@@ -159,7 +158,6 @@ class PropertySerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Property
-        # GÜNCELLEME: 'island' ve 'parcel' alanları kaldırıldı.
         fields = [
             'id',
             'project',
@@ -173,13 +171,18 @@ class PropertySerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_by', 'created_at', 'updated_at']
 
+    # 🔥 GÜNCELLEME BAŞLANGICI 🔥
     def get_thumbnail(self, obj):
+        """
+        Firebase Storage zaten tam URL döndürdüğü için 
+        'request.build_absolute_uri' kaldırıldı.
+        """
         first_image = obj.images.first()
-        if first_image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(first_image.image.url)
+        if first_image and first_image.image:
+            # .url özelliği artık tam Firebase URL'sini içerecek
+            return first_image.image.url
         return None
+    # 🔥 GÜNCELLEME SONU 🔥
 
 
 class PropertyDetailSerializer(serializers.ModelSerializer):
@@ -197,7 +200,6 @@ class PropertyDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Property
-        # GÜNCELLEME: 'island' ve 'parcel' alanları kaldırıldı.
         fields = [
             'id', 'project', 'block', 'floor',
             'unit_number', 'facade', 'facade_display', 'property_type',
@@ -215,7 +217,6 @@ class PropertyCreateUpdateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Property
-        # GÜNCELLEME: 'island' ve 'parcel' alanları kaldırıldı.
         fields = [
             'project',
             'block', 'floor',
@@ -225,14 +226,12 @@ class PropertyCreateUpdateSerializer(serializers.ModelSerializer):
         ]
     
     def validate(self, attrs):
-        # Vadeli fiyat girilmişse, peşin fiyattan düşük olamaz
         if attrs.get('installment_price'):
             if attrs['installment_price'] < attrs['cash_price']:
                 raise serializers.ValidationError({
                     'installment_price': 'Vadeli fiyat, peşin fiyattan düşük olamaz'
                 })
         
-        # Net alan, brüt alandan büyük olamaz
         if attrs['net_area_m2'] > attrs['gross_area_m2']:
             raise serializers.ValidationError({
                 'net_area_m2': 'Net alan, brüt alandan büyük olamaz'

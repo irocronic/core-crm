@@ -26,10 +26,23 @@ urlpatterns = [
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
 
-# Media files (development only)
+# 🔥 GÜNCELLEME:
+# DEBUG=True olduğunda dosyaları sunmak için.
+# MEDIA_URL (Firebase) artık lokal sunuma ihtiyaç duymaz.
+# Sadece STATIC_URL (lokal CSS/JS) sunulur.
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    # Lokal statik dosyaları (CSS, JS) sun
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    
+    # Firebase kullanılıyorsa, bu satıra artık gerek yok.
+    # Eğer Firebase ayarları (yukarıdaki settings) yapılmadıysa
+    # ve lokal depolama kullanılıyorsa, bu satır GEREKLİDİR.
+    # Ayarlarımızda 'if/else' olduğu için burayı güvende tutmak adına
+    # 'MEDIA_ROOT'un dolu olup olmadığını kontrol edebiliriz.
+    if settings.MEDIA_ROOT:
+         urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# 🔥 GÜNCELLEME SONU 🔥
+
 
 # Admin customization
 admin.site.site_header = "RealtyFlow CRM"
