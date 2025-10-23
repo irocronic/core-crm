@@ -23,11 +23,11 @@ ALLOWED_HOSTS = [
     '192.168.1.161',
     '192.168.1.106',
     '10.0.2.2',
-]
+] # [cite: 3]
 
-RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default=None)
-if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default=None) # [cite: 3]
+if RENDER_EXTERNAL_HOSTNAME: # [cite: 3]
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME) # [cite: 3]
 
 
 # INSTALLED_APPS
@@ -38,22 +38,22 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     # Third party apps
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
-    'django_filters',
-    'drf_spectacular',
-    'fcm_django',
-    'django_extensions',
-    'storages',  # 🔥 GÜNCELLEME: django-storages eklendi
-    
+    'django_filters', # [cite: 4]
+    'drf_spectacular', # [cite: 4]
+    'fcm_django', # [cite: 4]
+    'django_extensions', # [cite: 4]
+    'storages',  # 🔥 GÜNCELLEME: django-storages eklendi # [cite: 4]
+
     # Local apps
-    'apps.users',
-    'apps.properties',
-    'apps.crm',
-    'apps.sales',
+    'apps.users', # [cite: 4]
+    'apps.properties', # [cite: 4]
+    'apps.crm', # [cite: 4]
+    'apps.sales', # [cite: 4]
 ]
 
 MIDDLEWARE = [
@@ -72,14 +72,14 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        'DIRS': [BASE_DIR / 'templates'], # [cite: 5]
+        'APP_DIRS': True, # [cite: 5]
+        'OPTIONS': { # [cite: 5]
+            'context_processors': [ # [cite: 5]
+                'django.template.context_processors.debug', # [cite: 5]
+                'django.template.context_processors.request', # [cite: 5]
+                'django.contrib.auth.context_processors.auth', # [cite: 5]
+                'django.contrib.messages.context_processors.messages', # [cite: 6]
             ],
         },
     },
@@ -100,16 +100,16 @@ if DB_ENGINE == 'sqlite3':
         }
     }
 else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DB_NAME', default='realtyflow_db'),
-            'USER': config('DB_USER', default='realtyflow_user'),
-            'PASSWORD': config('DB_PASSWORD', default='secure_password'),
-            'HOST': config('DB_HOST', default='localhost'),
-            'PORT': config('DB_PORT', default='5432'),
-            'OPTIONS': {
-                'sslmode': config('DB_SSLMODE', default='prefer')
+    DATABASES = { # [cite: 6]
+        'default': { # [cite: 7]
+            'ENGINE': 'django.db.backends.postgresql', # [cite: 7]
+            'NAME': config('DB_NAME', default='realtyflow_db'), # [cite: 7]
+            'USER': config('DB_USER', default='realtyflow_user'), # [cite: 7]
+            'PASSWORD': config('DB_PASSWORD', default='secure_password'), # [cite: 7]
+            'HOST': config('DB_HOST', default='localhost'), # [cite: 7]
+            'PORT': config('DB_PORT', default='5432'), # [cite: 7]
+            'OPTIONS': { # [cite: 8]
+                'sslmode': config('DB_SSLMODE', default='prefer') # [cite: 8]
             }
         }
     }
@@ -135,54 +135,54 @@ USE_TZ = True
 # 🔥 STATIC & MEDIA FILES (RENDER HATASI İÇİN GÜNCELLENDİ)
 # ==========================================
 
-# --- STATIC FILES (Render için olduğu gibi kalıyor) ---
-# Render'da 'staticfiles' klasörüne collectstatic yapılır
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+# --- STATIC FILES (Render için olduğu gibi kalıyor) --- # [cite: 9]
+# Render'da 'staticfiles' klasörüne collectstatic yapılır # [cite: 9]
+STATIC_URL = 'static/' # [cite: 9]
+STATIC_ROOT = BASE_DIR / 'staticfiles' # [cite: 9]
 
-# --- MEDIA FILES (Firebase'e yönlendiriliyor) ---
-FIREBASE_STORAGE_BUCKET_NAME = config('FIREBASE_STORAGE_BUCKET_NAME', default='')
-FIREBASE_CREDS_PATH = config('FIREBASE_CREDENTIALS_PATH', default='')
+# --- MEDIA FILES (Firebase'e yönlendiriliyor) --- # [cite: 9]
+FIREBASE_STORAGE_BUCKET_NAME = config('FIREBASE_STORAGE_BUCKET_NAME', default='') # [cite: 9]
+FIREBASE_CREDS_PATH = config('FIREBASE_CREDENTIALS_PATH', default='') # [cite: 9]
 
 try:
-    # 1. Ayarlar (env vars) ve kimlik bilgisi dosyası var mı?
-    if FIREBASE_STORAGE_BUCKET_NAME and FIREBASE_CREDS_PATH and os.path.exists(FIREBASE_CREDS_PATH):
-        
-        # 2. Gerekli paket (django-storages[firebase]) yüklü mü?
-        #    Eğer yüklü değilse, bu satır ImportError fırlatacaktır.
-        import storages.backends.firebase
-        
+    # 1. Ayarlar (env vars) ve kimlik bilgisi dosyası var mı? # [cite: 9]
+    if FIREBASE_STORAGE_BUCKET_NAME and FIREBASE_CREDS_PATH and os.path.exists(FIREBASE_CREDS_PATH): #
+
+        # 2. Gerekli paket (django-storages[firebase]) yüklü mü? #
+        #    Eğer yüklü değilse, bu satır ImportError fırlatacaktır. # [cite: 11]
+        import storages.backends.firebase # [cite: 12]
+
         # --- Ayarlar Başarılı ---
-        DEFAULT_FILE_STORAGE = 'storages.backends.firebase.FirebaseStorage'
-        
-        # Firebase Admin SDK'nın bu dosyayı bulabilmesi için
-        os.environ.setdefault('FIREBASE_SERVICE_ACCOUNT_KEY_FILE', FIREBASE_CREDS_PATH)
-        
-        # Firebase Storage ayarları
-        FIREBASE_STORAGE_BUCKET_NAME = FIREBASE_STORAGE_BUCKET_NAME
-        FIREBASE_STORAGE_MEDIA_PUBLIC = True
-        FIREBASE_STORAGE_URL_EXPIRATION = timedelta(days=365 * 10)
-        
-        MEDIA_URL = f'https://storage.googleapis.com/{FIREBASE_STORAGE_BUCKET_NAME}/media/'
-        MEDIA_ROOT = '' # Lokal depolama kullanılmayacak
-        
-        print(f"✅ Firebase Storage '{FIREBASE_STORAGE_BUCKET_NAME}' için yapılandırıldı.")
-        
+        DEFAULT_FILE_STORAGE = 'storages.backends.firebase.FirebaseStorage' # [cite: 12]
+
+        # Firebase Admin SDK'nın bu dosyayı bulabilmesi için # [cite: 12]
+        os.environ.setdefault('FIREBASE_SERVICE_ACCOUNT_KEY_FILE', FIREBASE_CREDS_PATH) # [cite: 12]
+
+        # Firebase Storage ayarları # [cite: 12]
+        FIREBASE_STORAGE_BUCKET_NAME = FIREBASE_STORAGE_BUCKET_NAME # [cite: 12]
+        FIREBASE_STORAGE_MEDIA_PUBLIC = True #
+        FIREBASE_STORAGE_URL_EXPIRATION = timedelta(days=365 * 10) #
+
+        MEDIA_URL = f'https://storage.googleapis.com/{FIREBASE_STORAGE_BUCKET_NAME}/media/' #
+        MEDIA_ROOT = '' # Lokal depolama kullanılmayacak #
+
+        print(f"✅ Firebase Storage '{FIREBASE_STORAGE_BUCKET_NAME}' için yapılandırıldı.") #
+
     else:
-        # --- Lokal Geliştirme (Ayarlar eksik) ---
-        print("⚠️ Firebase Storage ayarları bulunamadı. Lokal medya depolama kullanılıyor.")
-        DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
-        MEDIA_URL = 'media/'
-        MEDIA_ROOT = BASE_DIR / 'media'
+        # --- Lokal Geliştirme (Ayarlar eksik) --- #
+        print("⚠️ Firebase Storage ayarları bulunamadı. Lokal medya depolama kullanılıyor.") #
+        DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage' #
+        MEDIA_URL = 'media/' #
+        MEDIA_ROOT = BASE_DIR / 'media' #
 
 except ImportError:
-    # --- Paket Hatası (Render'daki durum bu) ---
-    print("❌ HATA: 'django-storages[firebase]' paketi yüklü değil.")
-    print("⚠️ Firebase ayarları (env vars) algılandı ancak gerekli paket eksik.")
-    print("⚠️ Güvenli mod: Lokal medya depolamaya geri dönülüyor.")
-    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
-    MEDIA_URL = 'media/'
-    MEDIA_ROOT = BASE_DIR / 'media'
+    # --- Paket Hatası (Render'daki durum bu) --- #
+    print("❌ HATA: 'django-storages[firebase]' paketi yüklü değil.") #
+    print("⚠️ Firebase ayarları (env vars) algılandı ancak gerekli paket eksik.") #
+    print("⚠️ Güvenli mod: Lokal medya depolamaya geri dönülüyor.") #
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage' #
+    MEDIA_URL = 'media/' #
+    MEDIA_ROOT = BASE_DIR / 'media' # [cite: 15]
 # 🔥 GÜNCELLEME SONU 🔥
 
 
@@ -205,10 +205,10 @@ REST_FRAMEWORK = {
         'rest_framework.filters.OrderingFilter',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20,
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-    
-    'COERCE_DECIMAL_TO_STRING': False,
+    'PAGE_SIZE': 20, # [cite: 16]
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema', # [cite: 16]
+
+    'COERCE_DECIMAL_TO_STRING': False, # [cite: 16]
 }
 
 # JWT Settings
@@ -237,14 +237,14 @@ CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_HEADERS = [
     'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
+    'accept-encoding', # [cite: 17]
+    'authorization', # [cite: 17]
+    'content-type', # [cite: 17]
+    'dnt', # [cite: 17]
+    'origin', # [cite: 17]
+    'user-agent', # [cite: 17]
+    'x-csrftoken', # [cite: 17]
+    'x-requested-with', # [cite: 17]
 ]
 
 CORS_ALLOW_METHODS = [
@@ -265,22 +265,22 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
 # Firebase (FCM ve Admin SDK için)
-# (FIREBASE_CREDENTIALS_PATH yukarıda hem Storage hem Admin için tanımlandı)
-if FIREBASE_CREDS_PATH and os.path.exists(FIREBASE_CREDS_PATH):
+# (FIREBASE_CREDENTIALS_PATH yukarıda hem Storage hem Admin için tanımlandı) # [cite: 17]
+if FIREBASE_CREDS_PATH and os.path.exists(FIREBASE_CREDS_PATH): # [cite: 17]
     try:
-        import firebase_admin
-        from firebase_admin import credentials
-        
-        # Sadece bir kez başlatıldığından emin ol
-        if not firebase_admin._apps:
-            cred = credentials.Certificate(FIREBASE_CREDS_PATH)
-            firebase_admin.initialize_app(cred)
-            print("✅ Firebase Admin SDK başarıyla başlatıldı")
+        import firebase_admin # [cite: 18]
+        from firebase_admin import credentials # [cite: 18]
+
+        # Sadece bir kez başlatıldığından emin ol # [cite: 18]
+        if not firebase_admin._apps: # [cite: 18]
+            cred = credentials.Certificate(FIREBASE_CREDS_PATH) # [cite: 18]
+            firebase_admin.initialize_app(cred) # [cite: 18]
+            print("✅ Firebase Admin SDK başarıyla başlatıldı") # [cite: 18]
         else:
-            print("ℹ️ Firebase Admin SDK zaten başlatılmış.")
-            
+            print("ℹ️ Firebase Admin SDK zaten başlatılmış.") # [cite: 19]
+
     except Exception as e:
-        print(f"⚠️ Firebase Admin SDK başlatma hatası: {e}")
+        print(f"⚠️ Firebase Admin SDK başlatma hatası: {e}") # [cite: 19]
 
 # FCM Django
 FCM_DJANGO_SETTINGS = {
@@ -299,32 +299,32 @@ SPECTACULAR_SETTINGS = {
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
+    'formatters': { # [cite: 20]
+        'verbose': { # [cite: 20]
+            'format': '{levelname} {asctime} {module} {message}', # [cite: 20]
+            'style': '{', # [cite: 20]
         },
     },
     'handlers': {
         'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
-        },
+            'class': 'logging.StreamHandler', # [cite: 20]
+            'formatter': 'verbose', # [cite: 20]
+        }, # [cite: 21]
     },
     'root': {
-        'handlers': ['console'],
-        'level': 'INFO',
+        'handlers': ['console'], # [cite: 21]
+        'level': 'INFO', # [cite: 21]
     },
     'loggers': {
         'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
+            'handlers': ['console'], # [cite: 21]
+            'level': 'INFO', # [cite: 21]
+            'propagate': False, # [cite: 21]
         },
-        'apps': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': False,
+        'apps': { # [cite: 22]
+            'handlers': ['console'], # [cite: 22]
+            'level': 'DEBUG', # [cite: 22]
+            'propagate': False, # [cite: 22]
         },
     },
 }
