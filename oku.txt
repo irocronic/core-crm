@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Sanal ortam oluştur
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# Django projesini oluştur
+django-admin startproject config .
+
+# Uygulamaları oluştur
+python manage.py startapp users
+python manage.py startapp properties
+python manage.py startapp crm
+python manage.py startapp sales
+
+# Apps klasörüne taşı
+mkdir apps
+mv users properties crm sales apps/
+
+# PostgreSQL veritabanını oluştur (psql'de çalıştır)
+# CREATE DATABASE realtyflow_db;
+# CREATE USER realtyflow_user WITH PASSWORD 'secure_password';
+# GRANT ALL PRIVILEGES ON DATABASE realtyflow_db TO realtyflow_user;
