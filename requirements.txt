@@ -27,4 +27,4 @@ python-decouple
 gunicorn
 
 # YENİ EKLENDİ: PostgreSQL Bağlantısı
-psycopg2-binary
+psycopg2-binary==2.9.9
