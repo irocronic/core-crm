@@ -23,11 +23,16 @@ ALLOWED_HOSTS = [
     '192.168.1.161',
     '192.168.1.106',
     '10.0.2.2',
-] # [cite: 3]
+    # ✨ YENİ: Flutter Web'in kullandığı localhost IP'leri
+    '127.0.0.1:8080',
+    'localhost:8080',
+    # Masaüstü geliştirme için potansiyel IP'ler
+    '192.168.0.100',
+] #
 
-RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default=None) # [cite: 3]
-if RENDER_EXTERNAL_HOSTNAME: # [cite: 3]
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME) # [cite: 3]
+RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default=None) #
+if RENDER_EXTERNAL_HOSTNAME: #
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME) #
 
 
 # INSTALLED_APPS
@@ -260,7 +265,16 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:3000',
     'http://localhost:8080',
     'http://127.0.0.1:8080',
+    
 ]
+
+# ✨ YENİ: FLUTTER WEB / DESKTOP İçin Hızlı Ekleme (Port Aralığı)
+if DEBUG:
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        r"^http:\/\/localhost:\d+$",
+        r"^http:\/\/127\.0\.0\.1:\d+$",
+    ]
+# ✨ YENİ SONU
 
 CORS_ALLOW_CREDENTIALS = True
 
