@@ -184,7 +184,6 @@ SIMPLE_JWT = {
 # ==========================================
 # DEBUG=False olduğunda (Render'da) bu ayar False olacak
 # ve aşağıdaki CORS_ALLOWED_ORIGINS listesi kullanılacak.
-[cite_start]CORS_ALLOW_ALL_ORIGINS = DEBUG  # [cite: 11]
 
 # Production'da (Render'da) kullanılacak alan adları:
 CORS_ALLOWED_ORIGINS = [
